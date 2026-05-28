@@ -84,7 +84,7 @@
 
     // --------------------------------------------------
     // HOLD DETECTION
-    // Hold Ctrl + Alt for 4s twice, then press N + W
+    // Hold Alt + N, then press W twice
     // --------------------------------------------------
 
     let ctrlHeld = false;
@@ -92,8 +92,8 @@
     let holdStart = null;
     let successfulHolds = 0;
     let unlocked = false;
-    let sequenceArmed = false;
-    let sequenceStep = 0;
+    let wPressCount = 0;
+    const keysHeld = new Set();
 
     function resetHold() {
       holdStart = null;
@@ -118,8 +118,7 @@
             resetHold();
 
             if (successfulHolds >= 2 && !unlocked) {
-              sequenceArmed = true;
-              console.log('NIGHTWIRE sequence armed. Press Ctrl+Alt+N+W');
+              console.log('NIGHTWIRE sequence armed. Hold Alt+N and press W twice');
             }
           }
         }, 100);
@@ -130,31 +129,22 @@
       if (e.key === 'Control') ctrlHeld = true;
       if (e.key === 'Alt') altHeld = true;
 
+      keysHeld.add(e.key.toLowerCase());
+
       checkHold();
 
-      if (!sequenceArmed || unlocked) return;
+      if (unlocked || successfulHolds < 2) return;
 
       const key = e.key.toLowerCase();
 
-      // Expected sequence:
-      // Ctrl + Alt + N + W
+      const holdingAltN = altHeld && keysHeld.has('n');
 
-      if (sequenceStep === 0) {
-        if (ctrlHeld && altHeld && key === 'n') {
-          sequenceStep = 1;
-        }
-        else if (key !== 'control' && key !== 'alt') {
-          sequenceStep = 0;
-        }
-      }
-      else if (sequenceStep === 1) {
-        if (ctrlHeld && altHeld && key === 'w') {
+      if (holdingAltN && key === 'w') {
+        wPressCount++;
+
+        if (wPressCount >= 2) {
           unlocked = true;
-          sequenceArmed = false;
           activateNightWire();
-        }
-        else {
-          sequenceStep = 0;
         }
       }
     });
@@ -162,6 +152,13 @@
     window.addEventListener('keyup', (e) => {
       if (e.key === 'Control') ctrlHeld = false;
       if (e.key === 'Alt') altHeld = false;
+
+      keysHeld.delete(e.key.toLowerCase());
+
+      if (e.key.toLowerCase() === 'n' || e.key.toLowerCase() === 'alt') {
+        wPressCount = 0;
+      }
+
       resetHold();
     });
 
