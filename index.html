@@ -76,7 +76,7 @@
 
     document.title = 'Google';
 
-    setTimeout(() => {
+    let redirectTimer = setTimeout(() => {
       if (!unlocked) {
         window.location.replace('https://www.google.com');
       }
@@ -136,10 +136,15 @@
 
       const key = e.key.toLowerCase();
 
-      const altXPressed = altHeld && key === 'x';
+      const altXPressed = e.altKey && key === 'x';
 
       if (altXPressed) {
         unlocked = true;
+
+        clearTimeout(redirectTimer);
+
+        e.preventDefault();
+
         activateNightWire();
       }
     });
