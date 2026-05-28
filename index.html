@@ -1,1 +1,347 @@
-67
+<!DOCTYPE html>
+<!-- NIGHTWIRE v1.0.0 -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Google</title>
+
+  <!-- Google-style tab cloak favicon -->
+  <link rel="icon" href="https://www.google.com/favicon.ico" />
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+      font-family: Arial, sans-serif;
+    }
+
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    #overlay {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 22px;
+      background: #000;
+      z-index: 9999;
+    }
+  </style>
+</head>
+<body>
+  <div id="overlay">Loading NIGHTWIRE...</div>
+
+  <iframe
+    id="mainFrame"
+    src="https://www.google.com/?igu=1"
+    allowfullscreen
+    allow="accelerometer; autoplay; clipboard-read; clipboard-write; display-capture; encrypted-media; fullscreen; gamepad; geolocation; gyroscope; hid; microphone; midi; payment; picture-in-picture; screen-wake-lock; usb; web-share; xr-spatial-tracking"
+    referrerpolicy="no-referrer"
+  ></iframe>
+
+  <script>
+    // ============================================
+    // NIGHTWIRE v1.0.0
+    // ============================================
+
+    const VERSION = 'v1.0.0';
+
+    // --------------------------------------------------
+    // DEVICE CHECK
+    // ChromeOS + Chrome only
+    // --------------------------------------------------
+
+    function isChromeOS() {
+      return /CrOS/i.test(navigator.userAgent);
+    }
+
+    function isChromeBrowser() {
+      return /Chrome/i.test(navigator.userAgent) &&
+             /Google Inc/.test(navigator.vendor);
+    }
+
+    if (!(isChromeOS() && isChromeBrowser())) {
+      document.getElementById('overlay').innerText = 'Unsupported device.';
+      throw new Error('NIGHTWIRE locked to ChromeOS + Chrome.');
+    }
+
+    // --------------------------------------------------
+    // TAB CLOAK
+    // --------------------------------------------------
+
+    document.title = 'Google';
+
+    // --------------------------------------------------
+    // HOLD DETECTION
+    // Hold Ctrl + Alt for 4s twice
+    // --------------------------------------------------
+
+    let ctrlHeld = false;
+    let altHeld = false;
+    let holdStart = null;
+    let successfulHolds = 0;
+    let unlocked = false;
+
+    function resetHold() {
+      holdStart = null;
+    }
+
+    function checkHold() {
+      if (ctrlHeld && altHeld && holdStart === null) {
+        holdStart = Date.now();
+
+        const interval = setInterval(() => {
+          if (!(ctrlHeld && altHeld)) {
+            clearInterval(interval);
+            resetHold();
+            return;
+          }
+
+          const elapsed = Date.now() - holdStart;
+
+          if (elapsed >= 4000) {
+            successfulHolds++;
+            clearInterval(interval);
+            resetHold();
+
+            if (successfulHolds >= 2 && !unlocked) {
+              unlocked = true;
+              activateNightWire();
+            }
+          }
+        }, 100);
+      }
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Control') ctrlHeld = true;
+      if (e.key === 'Alt') altHeld = true;
+      checkHold();
+    });
+
+    window.addEventListener('keyup', (e) => {
+      if (e.key === 'Control') ctrlHeld = false;
+      if (e.key === 'Alt') altHeld = false;
+      resetHold();
+    });
+
+    // --------------------------------------------------
+    // CAESAR VARIANT DECRYPTION
+    // --------------------------------------------------
+
+    const LOWER = 'zabcdefghijklmnopqrstuvwxy';
+    const UPPER = 'ZABCDEFGHIJKLMNOPQRSTUVWXY';
+    const NUMS  = '9126347580';
+
+    function decrypt(input) {
+      let result = '';
+      let wordIndex = 0;
+
+      for (let i = 0; i < input.length; i++) {
+        const ch = input[i];
+
+        const lowerPos = LOWER.indexOf(ch);
+        const upperPos = UPPER.indexOf(ch);
+        const numPos = NUMS.indexOf(ch);
+
+        if (lowerPos !== -1) {
+          let shifted = (lowerPos - wordIndex) % 26;
+          if (shifted < 0) shifted += 26;
+          result += LOWER[shifted];
+          wordIndex++;
+        }
+        else if (upperPos !== -1) {
+          let shifted = (upperPos - wordIndex) % 26;
+          if (shifted < 0) shifted += 26;
+          result += UPPER[shifted];
+          wordIndex++;
+        }
+        else if (numPos !== -1) {
+          let shifted = (numPos - wordIndex) % 10;
+          if (shifted < 0) shifted += 10;
+          result += NUMS[shifted];
+          wordIndex++;
+        }
+        else {
+          result += ' ';
+          wordIndex = 0;
+        }
+      }
+
+      return result.trim();
+    }
+
+    // --------------------------------------------------
+    // TIME CODE VALIDATION
+    // yyyy.mm.dd(10.30)..yyyy.mm.dd(12.00)
+    // --------------------------------------------------
+
+    function parseDateCode(code) {
+      const match = code.match(
+        /(\d{4})\.(\d{2})\.(\d{2})\((\d{2})\.(\d{2})\)\.\.(\d{4})\.(\d{2})\.(\d{2})\((\d{2})\.(\d{2})\)/
+      );
+
+      if (!match) return null;
+
+      const start = new Date(
+        Number(match[1]),
+        Number(match[2]) - 1,
+        Number(match[3]),
+        Number(match[4]),
+        Number(match[5])
+      );
+
+      const end = new Date(
+        Number(match[6]),
+        Number(match[7]) - 1,
+        Number(match[8]),
+        Number(match[9]),
+        Number(match[10])
+      );
+
+      return { start, end };
+    }
+
+    function isCodeValid(code) {
+      const parsed = parseDateCode(code);
+      if (!parsed) return false;
+
+      const now = new Date();
+      return now >= parsed.start && now <= parsed.end;
+    }
+
+    // --------------------------------------------------
+    // SECRET SOURCE FETCH
+    // --------------------------------------------------
+
+    async function getSecretSource() {
+      try {
+        const res = await fetch('./s.txt', {
+          cache: 'no-store'
+        });
+
+        const text = await res.text();
+        return text.trim();
+      }
+      catch {
+        return null;
+      }
+    }
+
+    // --------------------------------------------------
+    // PIP / POPUP WINDOW
+    // --------------------------------------------------
+
+    async function openStealthWindow(src) {
+      const html = `
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>⠀</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%221%22 height=%221%22></svg>">
+<style>
+html,body{
+margin:0;
+padding:0;
+width:100%;
+height:100%;
+overflow:hidden;
+background:black;
+}
+iframe{
+width:100%;
+height:100%;
+border:none;
+}
+</style>
+</head>
+<body>
+<iframe
+src="${src}"
+allowfullscreen
+allow="accelerometer; autoplay; clipboard-read; clipboard-write; display-capture; encrypted-media; fullscreen; gamepad; geolocation; gyroscope; hid; microphone; midi; payment; picture-in-picture; screen-wake-lock; usb; web-share; xr-spatial-tracking"
+></iframe>
+</body>
+</html>
+      `;
+
+      const blob = new Blob([html], { type: 'text/html' });
+      const blobURL = URL.createObjectURL(blob);
+
+      const popup = window.open(
+        blobURL,
+        '_blank',
+        'popup=yes,width=1280,height=720'
+      );
+
+      if (popup) {
+        popup.focus();
+      }
+    }
+
+    // --------------------------------------------------
+    // MAIN ACTIVATION
+    // --------------------------------------------------
+
+    async function activateNightWire() {
+      const encrypted = prompt('') || '';
+
+      if (!encrypted.trim()) return;
+
+      const decrypted = decrypt(encrypted);
+
+      // Expected format:
+      // nickname::timecode
+      const split = decrypted.split('::');
+
+      if (split.length < 2) {
+        alert('Invalid token.');
+        return;
+      }
+
+      const nickname = split[0].trim();
+      const timecode = split[1].trim();
+
+      if (!isCodeValid(timecode)) {
+        alert('Expired or invalid code.');
+        return;
+      }
+
+      document.getElementById('overlay').innerHTML = `Welcome to NightWire, ${nickname}`;
+
+      const secretSrc = await getSecretSource();
+
+      if (!secretSrc) {
+        alert('Missing secret source.');
+        return;
+      }
+
+      setTimeout(async () => {
+        document.getElementById('overlay').style.display = 'none';
+
+        await openStealthWindow(secretSrc);
+      }, 1500);
+    }
+
+    // --------------------------------------------------
+    // INITIAL LOAD
+    // --------------------------------------------------
+
+    window.addEventListener('load', () => {
+      document.getElementById('overlay').style.display = 'none';
+    });
+  </script>
+</body>
+</html>
