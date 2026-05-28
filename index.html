@@ -76,53 +76,8 @@
 
     document.title = 'Google';
 
-    let redirectTimer = setTimeout(() => {
-      if (!unlocked) {
-        window.location.replace('https://www.google.com');
-      }
-    }, 3000);
-
-    // --------------------------------------------------
-    // HOLD DETECTION
-    // Single press Alt + X activation
-    // --------------------------------------------------
-
-    let ctrlHeld = false;
-    let altHeld = false;
-    let holdStart = null;
-    let successfulHolds = 0;
-    let unlocked = false;
-    const keysHeld = new Set();
-
-    function resetHold() {
-      holdStart = null;
-    }
-
-    function checkHold() {
-      if (ctrlHeld && altHeld && holdStart === null) {
-        holdStart = Date.now();
-
-        const interval = setInterval(() => {
-          if (!(ctrlHeld && altHeld)) {
-            clearInterval(interval);
-            resetHold();
-            return;
-          }
-
-          const elapsed = Date.now() - holdStart;
-
-          if (elapsed >= 4000) {
-            successfulHolds++;
-            clearInterval(interval);
-            resetHold();
-
-            if (successfulHolds >= 2 && !unlocked) {
-              console.log('NIGHTWIRE sequence armed. Press Alt+X');
-            }
-          }
-        }, 100);
-      }
-    }
+    // ALT+X pre-arm state
+    let altPressedRecently = false;
 
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Control') ctrlHeld = true;
@@ -131,24 +86,6 @@
       keysHeld.add(e.key.toLowerCase());
 
       checkHold();
-
-      if (unlocked || successfulHolds < 2) return;
-
-      const key = e.key.toLowerCase();
-
-      const altXPressed = (e.altKey || altHeld) && (key === 'x' || e.code === 'KeyX');
-
-      if (altXPressed) {
-        console.log('NIGHTWIRE activated');
-
-        unlocked = true;
-
-        clearTimeout(redirectTimer);
-
-        e.preventDefault();
-
-        activateNightWire();
-      }
     });
 
     document.addEventListener('keyup', (e) => {
