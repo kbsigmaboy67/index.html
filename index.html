@@ -40,15 +40,9 @@
   </style>
 </head>
 <body>
-  <div id="overlay">Loading NIGHTWIRE...</div>
+  <div id="overlay"></div>
 
-  <iframe
-    id="mainFrame"
-    src="https://www.google.com/?igu=1"
-    allowfullscreen
-    allow="accelerometer; autoplay; clipboard-read; clipboard-write; display-capture; encrypted-media; fullscreen; gamepad; geolocation; gyroscope; hid; microphone; midi; payment; picture-in-picture; screen-wake-lock; usb; web-share; xr-spatial-tracking"
-    referrerpolicy="no-referrer"
-  ></iframe>
+  
 
   <script>
     // ============================================
@@ -82,9 +76,15 @@
 
     document.title = 'Google';
 
+    setTimeout(() => {
+      if (!unlocked) {
+        window.location.replace('https://www.google.com');
+      }
+    }, 3000);
+
     // --------------------------------------------------
     // HOLD DETECTION
-    // Single press Alt + N activation
+    // Single press Alt + X activation
     // --------------------------------------------------
 
     let ctrlHeld = false;
@@ -117,7 +117,7 @@
             resetHold();
 
             if (successfulHolds >= 2 && !unlocked) {
-              console.log('NIGHTWIRE sequence armed. Press Alt+N');
+              console.log('NIGHTWIRE sequence armed. Press Alt+X');
             }
           }
         }, 100);
@@ -136,9 +136,9 @@
 
       const key = e.key.toLowerCase();
 
-      const altNPressed = altHeld && key === 'n';
+      const altXPressed = altHeld && key === 'x';
 
-      if (altNPressed) {
+      if (altXPressed) {
         unlocked = true;
         activateNightWire();
       }
@@ -338,7 +338,7 @@ allow="accelerometer; autoplay; clipboard-read; clipboard-write; display-capture
         return;
       }
 
-      document.getElementById('overlay').innerHTML = `Welcome to NightWire, ${nickname}`;
+      document.getElementById('overlay').innerHTML = '';
 
       const secretSrc = await getSecretSource();
 
