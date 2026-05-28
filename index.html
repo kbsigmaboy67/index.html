@@ -84,7 +84,7 @@
 
     // --------------------------------------------------
     // HOLD DETECTION
-    // Hold Alt + N, then press W twice
+    // Single press Alt + N activation
     // --------------------------------------------------
 
     let ctrlHeld = false;
@@ -92,7 +92,6 @@
     let holdStart = null;
     let successfulHolds = 0;
     let unlocked = false;
-    let wPressCount = 0;
     const keysHeld = new Set();
 
     function resetHold() {
@@ -118,7 +117,7 @@
             resetHold();
 
             if (successfulHolds >= 2 && !unlocked) {
-              console.log('NIGHTWIRE sequence armed. Hold Alt+N and press W twice');
+              console.log('NIGHTWIRE sequence armed. Press Alt+N');
             }
           }
         }, 100);
@@ -137,15 +136,11 @@
 
       const key = e.key.toLowerCase();
 
-      const holdingAltN = altHeld && keysHeld.has('n');
+      const altNPressed = altHeld && key === 'n';
 
-      if (holdingAltN && key === 'w') {
-        wPressCount++;
-
-        if (wPressCount >= 2) {
-          unlocked = true;
-          activateNightWire();
-        }
+      if (altNPressed) {
+        unlocked = true;
+        activateNightWire();
       }
     });
 
@@ -155,9 +150,7 @@
 
       keysHeld.delete(e.key.toLowerCase());
 
-      if (e.key.toLowerCase() === 'n' || e.key.toLowerCase() === 'alt') {
-        wPressCount = 0;
-      }
+      
 
       resetHold();
     });
