@@ -84,7 +84,7 @@
 
     // --------------------------------------------------
     // HOLD DETECTION
-    // Hold Ctrl + Alt for 4s twice
+    // Hold Ctrl + Alt for 4s twice, then press N + W
     // --------------------------------------------------
 
     let ctrlHeld = false;
@@ -92,6 +92,8 @@
     let holdStart = null;
     let successfulHolds = 0;
     let unlocked = false;
+    let sequenceArmed = false;
+    let sequenceStep = 0;
 
     function resetHold() {
       holdStart = null;
@@ -116,8 +118,8 @@
             resetHold();
 
             if (successfulHolds >= 2 && !unlocked) {
-              unlocked = true;
-              activateNightWire();
+              sequenceArmed = true;
+              console.log('NIGHTWIRE sequence armed. Press Ctrl+Alt+N+W');
             }
           }
         }, 100);
@@ -127,7 +129,34 @@
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Control') ctrlHeld = true;
       if (e.key === 'Alt') altHeld = true;
+
       checkHold();
+
+      if (!sequenceArmed || unlocked) return;
+
+      const key = e.key.toLowerCase();
+
+      // Expected sequence:
+      // Ctrl + Alt + N + W
+
+      if (sequenceStep === 0) {
+        if (ctrlHeld && altHeld && key === 'n') {
+          sequenceStep = 1;
+        }
+        else if (key !== 'control' && key !== 'alt') {
+          sequenceStep = 0;
+        }
+      }
+      else if (sequenceStep === 1) {
+        if (ctrlHeld && altHeld && key === 'w') {
+          unlocked = true;
+          sequenceArmed = false;
+          activateNightWire();
+        }
+        else {
+          sequenceStep = 0;
+        }
+      }
     });
 
     window.addEventListener('keyup', (e) => {
