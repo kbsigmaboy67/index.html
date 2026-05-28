@@ -76,28 +76,25 @@
 
     document.title = 'Google';
 
-    // ALT+X pre-arm state
-    let altPressedRecently = false;
+    // ALT+X activation
+    let unlocked = false;
 
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Control') ctrlHeld = true;
-      if (e.key === 'Alt') altHeld = true;
+    document.addEventListener('keydown', async (e) => {
+      const key = (e.key || '').toLowerCase();
 
-      // obsolete keysHeld removed
+      if ((e.altKey || key === 'alt') && (key === 'x' || e.code === 'KeyX')) {
+        unlocked = true;
 
-      checkHold();
-    });
+        clearTimeout(redirectTimer);
 
-    document.addEventListener('keyup', (e) => {
-      if (e.key === 'Control') ctrlHeld = false;
-      if (e.key === 'Alt') altHeld = false;
+        e.preventDefault();
+        e.stopPropagation();
 
-      // obsolete keysHeld removed
+        await activateNightWire();
+      }
+    }, true);
 
-      
-
-      resetHold();
-    });
+    
 
     // --------------------------------------------------
     // CAESAR VARIANT DECRYPTION
